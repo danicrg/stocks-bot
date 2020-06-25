@@ -8,7 +8,7 @@ from emoji import emojize
 import credentials
 
 ############################################################
-#						TELEGRAM STUFF
+#                  TELEGRAM STUFF
 ############################################################
 
 BOT_TOKEN = credentials.bot_token
@@ -40,7 +40,7 @@ def send_image(filename, message):
     fp.close()
 
 ############################################################
-#						STOCKS STUFF
+#                  STOCKS STUFF
 ############################################################
 
 
