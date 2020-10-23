@@ -19,8 +19,7 @@ s = requests.Session()
 
 response = s.get('https://api.telegram.org/bot{}/getUpdates'.format(BOT_TOKEN))
 res = json.loads(response.text)
-# ids = [11033299, 454975961, 1361876203]
-ids = [11033299]
+ids = [] # Enter your keys here
 for update in res['result']:
     ids.append(update['message']['chat']['id'])
 
