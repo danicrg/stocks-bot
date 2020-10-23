@@ -13,7 +13,7 @@ from emoji import emojize
 #   TELEGRAM STUFF #
 ##################
 
-BOT_TOKEN = '1225580845:AAHB1ooM-IZ0KVtJj4riSdKXfl2pA_PQJZY'
+BOT_TOKEN = [YOUR_TOKEN]
 
 s = requests.Session()
 
