@@ -2,21 +2,24 @@ import yfinance as yf
 import requests
 import json
 from twx.botapi import TelegramBot, InputFileInfo, InputFile
+import pandas as pd
+import numpy as np
+from datetime import datetime
 from random import choice
 import matplotlib.pyplot as plt
 from emoji import emojize
-import credentials
 
-############################################################
-#                  TELEGRAM STUFF
-############################################################
+##################
+#   TELEGRAM STUFF #
+##################
 
-BOT_TOKEN = credentials.bot_token
+BOT_TOKEN = '1225580845:AAHB1ooM-IZ0KVtJj4riSdKXfl2pA_PQJZY'
 
 s = requests.Session()
 
 response = s.get('https://api.telegram.org/bot{}/getUpdates'.format(BOT_TOKEN))
 res = json.loads(response.text)
+# ids = [11033299, 454975961, 1361876203]
 ids = [11033299]
 for update in res['result']:
     ids.append(update['message']['chat']['id'])
@@ -28,6 +31,7 @@ def send_broadcast(message):
     bot = TelegramBot(BOT_TOKEN)
     for chat_id in ids:
         bot.send_message(chat_id, message, parse_mode='Markdown')
+
 import time     
 def send_image(filename, message):
   bot = TelegramBot(BOT_TOKEN)
@@ -39,9 +43,9 @@ def send_image(filename, message):
     bot.send_photo(chat_id=chat_id, photo=photo, caption=message)
     fp.close()
 
-############################################################
-#                  STOCKS STUFF
-############################################################
+################
+#   STOCKS STUFF #
+################
 
 
 equity = yf.Ticker("VHGEX")
@@ -63,7 +67,7 @@ upper_band = upper_band.rename(columns={'y': 'upper'})
 lower_band = sma - 2 * rstd
 lower_band = lower_band.rename(columns={'y': 'lower'})
 
-# Plot the diagram
+# Making of plot
 bb = df.join(upper_band).join(lower_band)
 bb = bb.dropna()
 plt.style.use('dark_background')
@@ -84,21 +88,31 @@ plt.ylabel('SMA and BB')
 plt.grid()
 plt.savefig('bollinger')
 
-# Send message
+# Calculate evolution
 evolution = round((bb['y'][-1]-sma['y'][-1])/(2*rstd['y'][-1])*100)
-is_up_trend = bb['y'][-1]/bb['y'][-2] > 1
+
+today = bb['y'][-1]
+yesterday = bb['y'][-2]
+
+percentage_increase = 100 * (today - yesterday) / yesterday
 date = str(bb.index[-1]).split()[0]
-message = emojize(":date:", use_aliases=True) + ' ' + date + '\n\n'
-message += is_up_trend*emojize(":small_red_triangle:", use_aliases=True) + (not is_up_trend)*emojize(":small_red_triangle_down:", use_aliases=True) + ' Market cap is {}$, {}% away from the rolling mean\n\n'.format(bb['y'][-1], evolution)
+
+# Message generation
+
+# General stats
+message = emojize(":date:", use_aliases=True) + ' ' + date + '\n'
+message += (percentage_increase > 0)*emojize(":small_red_triangle:", use_aliases=True) + (percentage_increase < 0)*emojize(":small_red_triangle_down:", use_aliases=True)
+message += '{}% | {}$\n\n'.format(round(percentage_increase,2), round(today, 2))
+
+if evolution > 0:
+  message += '{}% recommended *SELL* for added rentability'.format(evolution)
+else:
+  message += '{}% recommended *BUY* for added rentability'.format(-evolution)
 
 
-if bb['y'][-1] <= bb['lower'][-1]:
-    message += emojize(":chart_with_downwards_trend:", use_aliases=True) + choice(['Market is down. Buy!', 'Buy!!', 'Going doown. Buy!', 'Good time to buy!', 'Reaching lows today. Buy!'])
-    send_image('bollinger.png', message)
-elif bb['y'][-1] >= bb['upper'][-1]:
-    message += emojize(":chart_with_upwards_trend:", use_aliases=True) + ' ' + choice(['Sell!', 'The market is up. Good time to sell.', 'Going up. Sell'])
-    send_image('bollinger.png', message)
-elif abs(bb['y'][-1]/bb['y'][-2] - 1) > 0.05:
+# emojize(":chart_with_downwards_trend:", use_aliases=True)
+
+if abs(percentage_increase) >= 0.5 or evolution >= 50:
     send_image('bollinger.png', message)
 else:
     send_broadcast(message)
