@@ -15,5 +15,5 @@ pytz==2020.1
 requests==2.24.0
 six==1.15.0
 twx.botapi==3.6.2
-urllib3==1.25.9
+urllib3==1.26.5
 yfinance==0.1.54
